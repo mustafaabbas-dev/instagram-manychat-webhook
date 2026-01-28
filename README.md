@@ -26,4 +26,22 @@ curl -X POST http://localhost:8080/webhook \
 
 ## Deploy (Cloud Run)
 
-This repo is ready to deploy to Google Cloud Run. Deployment steps will be added in the next step.
+1) Authenticate and set project:
+
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud services enable run.googleapis.com
+```
+
+2) Deploy:
+
+```bash
+gcloud run deploy instagram-manychat-webhook \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars WEBHOOK_SECRET=change-me
+```
+
+3) Use the URL output by the deploy command in ManyChat.
