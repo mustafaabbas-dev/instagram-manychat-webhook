@@ -26,6 +26,22 @@ server.addContentTypeParser(
 
 const PORT = Number(process.env.PORT ?? 8080);
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+const DEBOUNCE_MS = Number(process.env.DEBOUNCE_MS ?? 3000);
+
+type UserState = {
+  lastMessageAt: number;
+  messages: string[];
+};
+
+const userState = new Map<string, UserState>();
+
+type Payload = {
+  user_id?: string;
+  contact_id?: string;
+  id?: string;
+  text?: string;
+  message?: string;
+};
 
 function verifySecret(request: { headers: Record<string, string | string[] | undefined> }) {
   if (!WEBHOOK_SECRET) return true;
@@ -36,6 +52,47 @@ function verifySecret(request: { headers: Record<string, string | string[] | und
 }
 
 server.get("/health", async () => ({ ok: true }));
+
+server.post("/ingest", async (request, reply) => {
+  if (!verifySecret(request)) {
+    reply.code(401);
+    return { ok: false, error: "unauthorized" };
+  }
+
+  const payload = (request.body ?? {}) as Payload;
+  const userId = payload.user_id ?? payload.contact_id ?? payload.id ?? "unknown";
+  const text = payload.text ?? payload.message ?? "";
+
+  const state = userState.get(userId) ?? { lastMessageAt: 0, messages: [] };
+  state.lastMessageAt = Date.now();
+  if (text) state.messages.push(text);
+  userState.set(userId, state);
+
+  request.log.info({ userId, text }, "manychat ingest received");
+  return { ok: true };
+});
+
+server.post("/reply", async (request, reply) => {
+  if (!verifySecret(request)) {
+    reply.code(401);
+    return { ok: false, error: "unauthorized" };
+  }
+
+  const payload = (request.body ?? {}) as Payload;
+  const userId = payload.user_id ?? payload.contact_id ?? payload.id ?? "unknown";
+  const state = userState.get(userId);
+  if (!state) return { ok: true, reply_text: "" };
+
+  const age = Date.now() - state.lastMessageAt;
+  if (age < DEBOUNCE_MS) {
+    return { ok: true, reply_text: "" };
+  }
+
+  // Replace this with your real logic later
+  const replyText = "hello";
+  userState.delete(userId);
+  return { ok: true, reply_text: replyText };
+});
 
 server.post("/webhook", async (request, reply) => {
   if (!verifySecret(request)) {

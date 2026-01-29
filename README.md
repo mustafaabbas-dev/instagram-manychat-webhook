@@ -23,6 +23,8 @@ curl -X POST http://localhost:8080/webhook \
 
 - `GET /health` -> `{ ok: true }`
 - `POST /webhook` -> `{ ok: true }`
+- `POST /ingest` -> `{ ok: true }`
+- `POST /reply` -> `{ ok: true, reply_text }`
 
 ## Deploy (Cloud Run)
 
