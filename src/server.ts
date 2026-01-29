@@ -5,6 +5,24 @@ const server = Fastify({
   logger: true,
 });
 
+// Allow empty JSON bodies from providers that set Content-Type without a payload
+server.addContentTypeParser(
+  "application/json",
+  { parseAs: "string" },
+  (request, body, done) => {
+    if (body === "" || body === null || body === undefined) {
+      done(null, {});
+      return;
+    }
+    try {
+      const json = JSON.parse(body);
+      done(null, json);
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  }
+);
+
 const PORT = Number(process.env.PORT ?? 8080);
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
