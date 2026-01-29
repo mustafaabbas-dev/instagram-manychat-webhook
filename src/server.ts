@@ -28,7 +28,7 @@ server.post("/webhook", async (request, reply) => {
   const payload = request.body ?? null;
   request.log.info({ payload }, "manychat webhook received");
 
-  return { ok: true };
+  return { ok: true, reply_text: "hello" };
 });
 
 const start = async () => {
