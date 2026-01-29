@@ -10,12 +10,13 @@ server.addContentTypeParser(
   "application/json",
   { parseAs: "string" },
   (request, body, done) => {
-    if (body === "" || body === null || body === undefined) {
+    const text = typeof body === "string" ? body : body?.toString?.("utf8");
+    if (text === "" || text === null || text === undefined) {
       done(null, {});
       return;
     }
     try {
-      const json = JSON.parse(body);
+      const json = JSON.parse(text);
       done(null, json);
     } catch (err) {
       done(err as Error, undefined);
