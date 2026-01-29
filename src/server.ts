@@ -85,13 +85,18 @@ server.post("/reply", async (request, reply) => {
 
   const age = Date.now() - state.lastMessageAt;
   if (age < DEBOUNCE_MS) {
+    request.log.info({ userId, age }, "debounce not elapsed");
     return { ok: true, reply_text: "" };
   }
 
   // Replace this with your real logic later
   const replyText = "hello";
   userState.delete(userId);
-  return { ok: true, reply_text: replyText };
+  return {
+    ok: true,
+    reply_text: replyText,
+    actions: [{ action: "unset_field_value", field_name: "reply_text" }],
+  };
 });
 
 server.post("/webhook", async (request, reply) => {
